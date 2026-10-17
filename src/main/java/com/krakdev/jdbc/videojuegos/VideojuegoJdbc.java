@@ -19,7 +19,6 @@ public class VideojuegoJdbc {
 
     public static Videojuego insertar(Videojuego videojuego) {
         Connection con = null;
-        PreparedStatement ps = null;
 
         try {
             con = Conexion.getConnection();
@@ -27,7 +26,7 @@ public class VideojuegoJdbc {
                     INSERT INTO videojuegos(codigo, nombre, plataforma, precio, disponible, genero)
                     VALUES (?, ?, ?, ?, ?, ?)
                     """;
-            ps = con.prepareStatement(sql);
+            PreparedStatement ps = con.prepareStatement(sql);
             ps.setString(1, videojuego.getCodigo());
             ps.setString(2, videojuego.getNombre());
             ps.setString(3, videojuego.getPlataforma());
@@ -88,5 +87,43 @@ public class VideojuegoJdbc {
             }
         }
         return videojuegos;
+    }
+
+    public static Videojuego buscar(String codigo) {
+        Connection con = null;
+        Videojuego videojuego = null;
+
+        try {
+            con = Conexion.getConnection();
+            String sql = "SELECT * FROM videojuegos WHERE codigo = ?";
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setString(1, codigo);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                videojuego = new Videojuego(
+                        rs.getString("codigo"),
+                        rs.getString("nombre"),
+                        rs.getString("plataforma"),
+                        rs.getDouble("precio"),
+                        rs.getBoolean("disponible"),
+                        rs.getString("genero"));
+                log.info("Videojuego encontrado: " + codigo);
+            } else {
+                log.info("No existe un videojuego con código: " + codigo);
+            }
+        } catch (Exception e) {
+            log.error("Error al buscar", e);
+            throw new RuntimeException("Error al buscar " + e.getMessage());
+        } finally {
+            try {
+                if (con != null) {
+                    con.close();
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        return videojuego;
     }
 }

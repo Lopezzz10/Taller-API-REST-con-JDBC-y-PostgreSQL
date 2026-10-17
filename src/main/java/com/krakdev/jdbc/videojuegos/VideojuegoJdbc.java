@@ -35,8 +35,8 @@ public class VideojuegoJdbc {
             ps.setBoolean(5, videojuego.isDisponible());
             ps.setString(6, videojuego.getGenero());
 
-            int filas = ps.executeUpdate();
-            log.info("Videojuego insertado, filas: " + filas);
+            ps.executeUpdate();
+            log.info("Videojuego insertado: " + videojuego.getCodigo());
 
             return videojuego;
         } catch (Exception e) {
@@ -168,11 +168,13 @@ public class VideojuegoJdbc {
             ps.setString(6, codigo);
 
             int filas = ps.executeUpdate();
-            log.info("Videojuego actualizado, filas: " + filas);
 
             if (filas > 0) {
+                log.info("Videojuego actualizado: " + codigo);
                 actualizado = new Videojuego(codigo, videojuego.getNombre(), videojuego.getPlataforma(),
                         videojuego.getPrecio(), videojuego.isDisponible(), videojuego.getGenero());
+            } else {
+                log.info("No existe un videojuego con código: " + codigo);
             }
         } catch (Exception e) {
             log.error("Error al actualizar", e);
@@ -204,8 +206,12 @@ public class VideojuegoJdbc {
             ps.setString(1, codigo);
 
             int filas = ps.executeUpdate();
-            log.info("Videojuego eliminado, filas: " + filas);
 
+            if (filas > 0) {
+                log.info("Videojuego eliminado: " + codigo);
+            } else {
+                log.info("No existe un videojuego con código: " + codigo);
+            }
             eliminado = filas > 0;
         } catch (Exception e) {
             log.error("Error al eliminar", e);

@@ -19,6 +19,7 @@ public class VideojuegoJdbc {
 
     public static Videojuego insertar(Videojuego videojuego) {
         Connection con = null;
+        PreparedStatement ps = null;
 
         try {
             con = Conexion.getConnection();
@@ -26,7 +27,7 @@ public class VideojuegoJdbc {
                     INSERT INTO videojuegos(codigo, nombre, plataforma, precio, disponible, genero)
                     VALUES (?, ?, ?, ?, ?, ?)
                     """;
-            PreparedStatement ps = con.prepareStatement(sql);
+            ps = con.prepareStatement(sql);
             ps.setString(1, videojuego.getCodigo());
             ps.setString(2, videojuego.getNombre());
             ps.setString(3, videojuego.getPlataforma());
@@ -43,11 +44,14 @@ public class VideojuegoJdbc {
             throw new RuntimeException("Error al insertar " + e.getMessage());
         } finally {
             try {
+                if (ps != null) {
+                    ps.close();
+                }
                 if (con != null) {
                     con.close();
                 }
             } catch (SQLException e) {
-                e.printStackTrace();
+                log.error("Error al cerrar conexión en insertar", e);
             }
         }
     }
@@ -55,12 +59,14 @@ public class VideojuegoJdbc {
     public static List<Videojuego> listar() {
         List<Videojuego> videojuegos = new ArrayList<>();
         Connection con = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
 
         try {
             con = Conexion.getConnection();
             String sql = "SELECT * FROM videojuegos";
-            PreparedStatement ps = con.prepareStatement(sql);
-            ResultSet rs = ps.executeQuery();
+            ps = con.prepareStatement(sql);
+            rs = ps.executeQuery();
 
             while (rs.next()) {
                 Videojuego v = new Videojuego(
@@ -79,11 +85,17 @@ public class VideojuegoJdbc {
             throw new RuntimeException("Error al listar " + e.getMessage());
         } finally {
             try {
+                if (rs != null) {
+                    rs.close();
+                }
+                if (ps != null) {
+                    ps.close();
+                }
                 if (con != null) {
                     con.close();
                 }
             } catch (SQLException e) {
-                e.printStackTrace();
+                log.error("Error al cerrar conexión en listar", e);
             }
         }
         return videojuegos;
@@ -91,14 +103,16 @@ public class VideojuegoJdbc {
 
     public static Videojuego buscar(String codigo) {
         Connection con = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
         Videojuego videojuego = null;
 
         try {
             con = Conexion.getConnection();
             String sql = "SELECT * FROM videojuegos WHERE codigo = ?";
-            PreparedStatement ps = con.prepareStatement(sql);
+            ps = con.prepareStatement(sql);
             ps.setString(1, codigo);
-            ResultSet rs = ps.executeQuery();
+            rs = ps.executeQuery();
 
             if (rs.next()) {
                 videojuego = new Videojuego(
@@ -117,11 +131,17 @@ public class VideojuegoJdbc {
             throw new RuntimeException("Error al buscar " + e.getMessage());
         } finally {
             try {
+                if (rs != null) {
+                    rs.close();
+                }
+                if (ps != null) {
+                    ps.close();
+                }
                 if (con != null) {
                     con.close();
                 }
             } catch (SQLException e) {
-                e.printStackTrace();
+                log.error("Error al cerrar conexión en buscar", e);
             }
         }
         return videojuego;
@@ -129,6 +149,8 @@ public class VideojuegoJdbc {
 
     public static Videojuego actualizar(String codigo, Videojuego videojuego) {
         Connection con = null;
+        PreparedStatement ps = null;
+        Videojuego actualizado = null;
 
         try {
             con = Conexion.getConnection();
@@ -137,7 +159,7 @@ public class VideojuegoJdbc {
                     SET nombre = ?, plataforma = ?, precio = ?, disponible = ?, genero = ?
                     WHERE codigo = ?
                     """;
-            PreparedStatement ps = con.prepareStatement(sql);
+            ps = con.prepareStatement(sql);
             ps.setString(1, videojuego.getNombre());
             ps.setString(2, videojuego.getPlataforma());
             ps.setDouble(3, videojuego.getPrecio());
@@ -148,49 +170,58 @@ public class VideojuegoJdbc {
             int filas = ps.executeUpdate();
             log.info("Videojuego actualizado, filas: " + filas);
 
-            if (filas == 0) {
-                return null;
+            if (filas > 0) {
+                actualizado = new Videojuego(codigo, videojuego.getNombre(), videojuego.getPlataforma(),
+                        videojuego.getPrecio(), videojuego.isDisponible(), videojuego.getGenero());
             }
-            return new Videojuego(codigo, videojuego.getNombre(), videojuego.getPlataforma(),
-                    videojuego.getPrecio(), videojuego.isDisponible(), videojuego.getGenero());
         } catch (Exception e) {
             log.error("Error al actualizar", e);
             throw new RuntimeException("Error al actualizar " + e.getMessage());
         } finally {
             try {
+                if (ps != null) {
+                    ps.close();
+                }
                 if (con != null) {
                     con.close();
                 }
             } catch (SQLException e) {
-                e.printStackTrace();
+                log.error("Error al cerrar conexión en actualizar", e);
             }
         }
+        return actualizado;
     }
 
     public static boolean eliminar(String codigo) {
         Connection con = null;
+        PreparedStatement ps = null;
+        boolean eliminado = false;
 
         try {
             con = Conexion.getConnection();
             String sql = "DELETE FROM videojuegos WHERE codigo = ?";
-            PreparedStatement ps = con.prepareStatement(sql);
+            ps = con.prepareStatement(sql);
             ps.setString(1, codigo);
 
             int filas = ps.executeUpdate();
             log.info("Videojuego eliminado, filas: " + filas);
 
-            return filas > 0;
+            eliminado = filas > 0;
         } catch (Exception e) {
             log.error("Error al eliminar", e);
             throw new RuntimeException("Error al eliminar " + e.getMessage());
         } finally {
             try {
+                if (ps != null) {
+                    ps.close();
+                }
                 if (con != null) {
                     con.close();
                 }
             } catch (SQLException e) {
-                e.printStackTrace();
+                log.error("Error al cerrar conexión en eliminar", e);
             }
         }
+        return eliminado;
     }
 }
